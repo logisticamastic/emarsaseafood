@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://emarsa.es/</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://emarsa.es/img/og-emar-seafood.jpg</image:loc>
+      <image:title>EMAR S.A. - Exportadora de camarón ecuatoriano</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://emarsa.es/img/camaron-vannamei-premium-iqf.webp</image:loc>
+      <image:title>Camarón Vannamei Premium IQF</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://emarsa.es/img/camaron-hoso-head-on-shell-on.webp</image:loc>
+      <image:title>Camarón HOSO Head-On Shell-On</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://emarsa.es/img/camaron-hlso-headless-shell-on.webp</image:loc>
+      <image:title>Camarón HLSO Headless Shell-On</image:title>
+    </image:image>
+  </url>
+</urlset>
