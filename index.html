@@ -214,7 +214,7 @@
   /* hero */
   .hero{position:relative;background:radial-gradient(120% 140% at 15% 0%,var(--deep-2) 0%,var(--deep) 55%,#041729 100%);overflow:hidden;color:#fff;}
   .hero::before{content:"";position:absolute;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(15,163,177,0.35),transparent 70%);top:-220px;right:-160px;}
-  .hero .wrap{position:relative;display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;padding:96px 32px 84px;}
+  .hero .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:start;padding:64px 32px 72px;}
   .hero h1{color:#fff;font-size:clamp(34px,4.4vw,54px);line-height:1.06;font-weight:700;}
   .hero h1 em{font-style:normal;color:var(--teal);}
   .hero p{margin-top:22px;color:rgba(255,255,255,0.78);max-width:480px;font-size:16.5px;}
@@ -227,8 +227,8 @@
   .stat-row{display:flex;gap:36px;margin-top:44px;flex-wrap:wrap;}
   .stat-row div b{display:block;font-family:'Space Grotesk';font-size:26px;color:var(--teal);}
   .stat-row div span{font-size:12.5px;color:rgba(255,255,255,0.65);}
-  .hero-visual{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.45);}
-  .hero-visual img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/5;}
+  .hero-visual{position:relative;width:100%;min-width:0;border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.45);}
+  .hero-visual video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#06243D;}
 
   /* about */
   .about{padding:84px 0;border-bottom:1px solid var(--line);}
@@ -399,7 +399,8 @@
     .wa-panel{right:16px;left:16px;width:auto;}
     .wa-fab{right:16px;}
     .footer-bar .wrap{flex-direction:column;align-items:center;gap:12px;}
-    .hero .wrap{padding-top:40px;}
+    .hero .wrap{padding:40px 20px 48px;gap:32px;}
+    .hero-visual{border-radius:12px;}
   }
 </style>
 </head>
@@ -465,7 +466,7 @@
       </div>
     </div>
     <div class="hero-visual">
-      <img class="viewable" src="img/camaron-fresco-emar.webp" alt="Camarón fresco EMAR - exportadora de camarón Ecuador" data-caption="Camarón fresco EMAR">
+      <video src="video/emar-camaron-hero.mp4" poster="img/poster-video-camaron.webp" width="854" height="480" autoplay muted loop playsinline controls preload="metadata" aria-label="Video corporativo de EMAR S.A.: exportadora de camarón ecuatoriano, del Ecuador para el mundo"></video>
     </div>
   </div>
 </section>
@@ -1063,7 +1064,7 @@ const i18n = {
 
 let currentLang = "es";
 
-function applyLang(lang){
+function applyLang(lang, auto){
   currentLang = lang;
   const dict = i18n[lang];
   document.documentElement.lang = lang;
@@ -1076,12 +1077,31 @@ function applyLang(lang){
     if(dict[key] !== undefined) el.setAttribute("placeholder", dict[key]);
   });
   document.querySelectorAll(".lang-switch button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
-  if(dict.seo_title) document.title = dict.seo_title;
-  const metaDesc = document.querySelector('meta[name="description"]');
-  if(metaDesc && dict.seo_desc) metaDesc.setAttribute("content", dict.seo_desc);
+  if(!auto){
+    if(dict.seo_title) document.title = dict.seo_title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if(metaDesc && dict.seo_desc) metaDesc.setAttribute("content", dict.seo_desc);
+  }
 }
-document.querySelectorAll(".lang-switch button").forEach(btn => btn.addEventListener("click", () => applyLang(btn.dataset.lang)));
-applyLang("es");
+document.querySelectorAll(".lang-switch button").forEach(btn => btn.addEventListener("click", () => {
+  applyLang(btn.dataset.lang);
+  try{ localStorage.setItem("emar_lang", btn.dataset.lang); }catch(e){}
+}));
+/* idioma inicial: elección guardada > idioma del navegador > español */
+(function(){
+  let lang = "es", saved = null;
+  try{ saved = localStorage.getItem("emar_lang"); }catch(e){}
+  if(saved && i18n[saved]){ lang = saved; }
+  else{
+    const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "es"];
+    for(const p of prefs){
+      const code = String(p).toLowerCase().slice(0,2);
+      if(i18n[code]){ lang = code; break; }
+    }
+    if(!i18n[lang]) lang = "es";
+  }
+  applyLang(lang, true);
+})();
 
 /* back to top button */
 const backToTop = document.getElementById("backToTop");
