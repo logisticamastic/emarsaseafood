@@ -228,6 +228,11 @@
   .stat-row div b{display:block;font-family:'Space Grotesk';font-size:26px;color:var(--teal);}
   .stat-row div span{font-size:12.5px;color:rgba(255,255,255,0.65);}
   .hero-visual{position:relative;width:100%;min-width:0;border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.45);}
+  .hero-visual{container-type:inline-size;}
+  .vsub{display:flex;align-items:center;justify-content:center;text-align:center;min-height:calc(1.4em*3 + 24px);padding:12px 6%;background:#041729;color:#fff;font-weight:600;font-size:clamp(11px,3cqw,18px);line-height:1.4;pointer-events:none;}
+  .vsub[hidden]{display:none;}
+  .vmute{position:absolute;left:10px;top:10px;z-index:2;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(4,23,41,.65);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .vmute:hover,.vmute:focus-visible{background:var(--coral);outline:none;}
   .hero-visual video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#06243D;}
 
   /* about */
@@ -466,7 +471,9 @@
       </div>
     </div>
     <div class="hero-visual">
-      <video src="video/emar-camaron-hero.mp4" poster="img/poster-video-camaron.webp" width="854" height="480" autoplay muted loop playsinline controls preload="metadata" aria-label="Video corporativo de EMAR S.A.: exportadora de camarón ecuatoriano, del Ecuador para el mundo"></video>
+      <video src="video/emar-camaron-hero.mp4" poster="img/poster-video-camaron.webp" width="854" height="480" autoplay muted loop playsinline preload="metadata" aria-label="Video corporativo de EMAR S.A.: exportadora de camarón ecuatoriano, del Ecuador para el mundo"></video>
+      <div class="vsub" id="vsub" aria-hidden="true" hidden></div>
+      <button class="vmute" id="vmute" type="button" aria-label="Activar sonido"><svg id="vmute-ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button>
     </div>
   </div>
 </section>
@@ -1082,7 +1089,46 @@ function applyLang(lang, auto){
     const metaDesc = document.querySelector('meta[name="description"]');
     if(metaDesc && dict.seo_desc) metaDesc.setAttribute("content", dict.seo_desc);
   }
+  if(typeof updateVideoSubs==="function") updateVideoSubs();
 }
+
+/* Subtítulos del video por idioma (en español ya vienen dentro del video) */
+const VIDEO_CUES=[[0,3.1],[3.1,6.4],[6.4,9.4],[9.4,20.4],[20.4,24.9],[24.9,30],[30,33.9],[33.9,38.9],[38.9,43.4],[43.4,48.4],[48.4,56.3],[56.3,61.9],[61.9,64.6],[64.6,68.9],[68.9,999]];
+const VIDEO_SUBS={
+ en:["EMAR S.A. — From Ecuador to the world","Ecuador is a land of natural wealth,","hard work and aquaculture excellence.","From this privileged country, EMAR S.A. is part of an industry that turns aquaculture resources into quality products,","proudly and committedly carrying the name of Ecuador.","We specialize in processing aquaculture products,","taking care of every stage of our operations,","from receiving the raw material to its processing,","with responsibility, dedication and attention to every detail.","Behind every process there is a committed team of people,","technology and a constant effort to maintain the quality that defines our industry.","At EMAR S.A. we believe excellence is built day by day,","through teamwork,","continuous improvement and commitment to our customers.","Our purpose is to keep growing,"],
+ pt:["EMAR S.A. — Do Equador para o mundo","O Equador é uma terra de riqueza natural,","trabalho e excelência aquícola.","Deste país privilegiado, a EMAR S.A. faz parte de uma indústria que transforma os recursos aquícolas em produtos de qualidade,","levando o nome do Equador com orgulho e compromisso.","Somos especializados no processamento de produtos aquícolas,","cuidando de cada etapa das nossas operações,","desde o recebimento da matéria-prima até o seu processamento,","com responsabilidade, dedicação e atenção a cada detalhe.","Por trás de cada processo há uma equipe humana comprometida,","tecnologia e um esforço constante para manter a qualidade que caracteriza a nossa indústria.","Na EMAR S.A. acreditamos que a excelência se constrói dia após dia,","por meio do trabalho em equipe,","da melhoria contínua e do compromisso com os nossos clientes.","Nosso propósito é continuar crescendo,"],
+ zh:["EMAR S.A. — 从厄瓜多尔走向世界","厄瓜多尔是一片自然资源丰富的土地，","勤劳工作，水产养殖卓越。","在这个得天独厚的国家，EMAR S.A. 是将水产资源转化为优质产品的行业的一员，","以自豪与责任感传扬厄瓜多尔的名字。","我们专注于水产品加工，","用心把控运营的每一个环节，","从原料接收到加工处理，","以责任心、敬业精神和对每个细节的关注。","每一道工序背后都有一支尽心尽责的团队，","以及先进的技术和保持行业品质的不懈努力。","在 EMAR S.A.，我们相信卓越源于日积月累，","源于团队协作，","源于持续改进和对客户的承诺。","我们的目标是不断成长，"]
+};
+const MUTE_LABELS={es:["Activar sonido","Silenciar"],en:["Turn sound on","Mute"],zh:["开启声音","静音"],pt:["Ativar som","Silenciar"]};
+function updateVideoSubs(){
+  const box=document.getElementById("vsub"), vid=document.querySelector(".hero-visual video");
+  if(!box||!vid) return;
+  const list=VIDEO_SUBS[currentLang];
+  if(!list){ box.hidden=true; box.textContent=""; }
+  else{
+    const t=vid.currentTime;
+    let idx=VIDEO_CUES.findIndex(c=>t>=c[0]&&t<c[1]);
+    if(idx<0) idx=0;
+    box.hidden=false;
+    if(box.dataset.i!==currentLang+idx){ box.textContent=list[idx]; box.dataset.i=currentLang+idx; }
+  }
+  const btn=document.getElementById("vmute");
+  if(btn){ const L=MUTE_LABELS[currentLang]||MUTE_LABELS.es; btn.setAttribute("aria-label",vid.muted?L[0]:L[1]); }
+}
+(function(){
+  const vid=document.querySelector(".hero-visual video"), btn=document.getElementById("vmute");
+  if(!vid||!btn) return;
+  vid.addEventListener("timeupdate",updateVideoSubs);
+  vid.addEventListener("seeked",updateVideoSubs);
+  btn.addEventListener("click",()=>{
+    vid.muted=!vid.muted;
+    document.getElementById("vmute-ic").innerHTML=vid.muted
+      ?'<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/>'
+      :'<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>';
+    if(!vid.muted && vid.paused) vid.play();
+    updateVideoSubs();
+  });
+})();
 document.querySelectorAll(".lang-switch button").forEach(btn => btn.addEventListener("click", () => {
   applyLang(btn.dataset.lang);
   try{ localStorage.setItem("emar_lang", btn.dataset.lang); }catch(e){}
